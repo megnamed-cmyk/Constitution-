@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+backend/data/constitutional_db/
+backend/data/cache/
+backend/data/*.jsonl
+!backend/data/seed.jsonl
+node_modules/
+frontend/dist/
+.env
