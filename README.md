@@ -14,7 +14,18 @@ question ─┬─ dense search (BGE-small embeddings) ─┐
 - **Constitution Annotated (CONAN)**: the Congressional Research Service's essays on doctrine and precedent, chunked at about 320 words, with case names pulled from italics (tier 2).
 - **Seed**: 4 hand-written demo chunks, so you can try it offline.
 
-## Setup
+## Quick start (double-click)
+
+1. Install **Python 3.10+** (https://www.python.org/downloads/; on Windows tick "Add python.exe to PATH") and **Node.js LTS** (https://nodejs.org/).
+2. Unzip this folder somewhere, e.g. your Desktop.
+3. Double-click **`start.command`** (Mac) or **`start.bat`** (Windows).
+   - Mac: if it says the file can't be opened, right-click it, choose **Open**, then **Open** again.
+4. Paste your Claude API key when asked (get one at https://console.anthropic.com/settings/keys). It's saved to a local `.env` file and never leaves your computer except to call Claude.
+5. The first run installs everything and builds the knowledge base (10+ minutes). The app then opens at http://localhost:5173. Later runs start in seconds.
+
+To load the full Constitution Annotated later: `cd backend` then `../.venv/bin/python -m ingest conan` (Mac) or `..\.venv\Scripts\python -m ingest conan` (Windows).
+
+## Manual setup
 
 ```bash
 # Backend (Python 3.10+)
