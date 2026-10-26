@@ -38,7 +38,13 @@ def rerank(query: str, candidates: list[dict[str, Any]], top_n: int) -> list[dic
     return sorted(scored, key=lambda c: c["reranker_score"], reverse=True)[:top_n]
 
 
-def assess_grounding(chunks: list[dict[str, Any]]) -> Grounding:
+# "Balanced" cutoffs on the cross-encoder's 0..1 relevance score: one clearly
+# relevant passage is enough to ground an answer; anything below WEAK_MIN is noise.
+GROUNDED_MIN = 0.45
+WEAK_MIN = 0.15
+
+
+def assess_grounding(chunks: list[dict[str, Any]], rrf_k: int = 60) -> Grounding:
     """Decide how well the retrieved chunks support an answer.
 
     Each chunk carries `rrf_score` (always) and `reranker_score` (only when the
@@ -48,8 +54,22 @@ def assess_grounding(chunks: list[dict[str, Any]]) -> Grounding:
       "weak"     -> answer, but flag that retrieved support is thin
       "none"     -> say the corpus doesn't cover it; general doctrine only, clearly labeled
     """
-    # TODO(you): pick the thresholds / logic. See README "Your turn" for the trade-offs.
-    return "grounded" if chunks else "none"
+    if not chunks:
+        return "none"
+
+    scores = [c["reranker_score"] for c in chunks if c.get("reranker_score") is not None]
+    if scores:
+        top = max(scores)
+        if top >= GROUNDED_MIN:
+            return "grounded"
+        return "weak" if top >= WEAK_MIN else "none"
+
+    # Reranker off: RRF scores are only relative ranks, so use agreement instead.
+    # A chunk found by both dense and keyword search scores at least 2/(k+pool),
+    # which beats the best possible single-list score of 1/(k+1).
+    if any(c.get("rrf_score", 0.0) > 1.0 / (rrf_k + 1) for c in chunks):
+        return "grounded"
+    return "weak"
 
 
 def retrieve(query: str, pool_size: int, top_k: int) -> tuple[list[dict[str, Any]], Grounding]:

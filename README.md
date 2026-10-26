@@ -61,9 +61,19 @@ The tests swap in a hashing embedder and a word-overlap reranker, so they run of
 | `backend/ingest/` | Constitution and CONAN scrapers, chunking, CLI |
 | `frontend/src/` | Stream hook, analyzer UI, citations, sources panel |
 
-## Your turn: `assess_grounding`
+## Grounding check
 
-`backend/app/retrieval.py` has a `TODO(you)`. It decides whether the retrieved chunks actually support an answer. The result switches Claude between three modes: answer from sources, answer with a warning that support is thin, or say the corpus doesn't cover the question.
+Before Claude answers, `assess_grounding()` in `backend/app/retrieval.py` rates how well the retrieved passages match the question. The verdict appears above the answer and changes Claude's instructions:
+
+| Verdict | When (reranker on) | Claude is told to… |
+|---|---|---|
+| **grounded** | best passage scores ≥ 0.45 | answer from the sources and cite them |
+| **weak** | best passage scores 0.15–0.45 | say up front that support is thin |
+| **none** | best passage scores < 0.15 | say the corpus doesn't cover it; give a brief, labeled general answer |
+
+With the reranker off, a passage that both the meaning-based search and the keyword search found counts as grounded; anything else is weak.
+
+These are "balanced" defaults. Tune `GROUNDED_MIN` and `WEAK_MIN` once the real corpus is loaded: raise them for a more cautious tool, lower them for fewer warnings.
 
 ---
 Educational tool, not legal advice.
